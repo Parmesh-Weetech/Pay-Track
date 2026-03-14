@@ -1,33 +1,47 @@
-import mongoose from "mongoose";
+import { Document } from "mongoose";
 import { UserStatus } from "../types/user-status";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
-export const UserSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        required: true
-    },
-    lastName: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        unique: true,
-        required: true,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    },
-    status: {
-        type: String,
-        enum: UserStatus,
-        required: true
-    }
-}, {
+@Schema({
     timestamps: {
         createdAt: true,
         updatedAt: true
-    }
-});
+    },
+    collection: 'users'
+})
+export class UserSchema extends Document {
+    @Prop({
+        name: 'firstName',
+        required: true,
+        type: String,
+        minLength: 3
+    })
+    firstName: string;
 
-UserSchema.index({ status: 1 });
+    @Prop({
+        name: 'lastName',
+        required: true,
+        lowercase: true,
+        trim: true,
+        type: String,
+        minLength: 3
+    })
+    lastName: string;
 
-export const User = mongoose.model("User", UserSchema);
+    @Prop({
+        required: true,
+        unique: true,
+        type: String,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    })
+    email: string;
+
+    @Prop({
+        required: true,
+        enum: UserStatus,
+        type: String
+    })
+    status: string;
+}
+
+export const User = SchemaFactory.createForClass(UserSchema);

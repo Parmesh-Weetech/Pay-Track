@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './app/user/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { environmentConfig } from './app/common/config/environment.config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { RestModule } from './app/rest/rest.module';
 
 const envPath = path.resolve('.env');
 
 @Module({
   imports: [
-    UserModule,
+    RestModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: envPath,
