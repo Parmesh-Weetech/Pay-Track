@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { UserStatus } from "../types/user-status";
 
-const UserSchema = new mongoose.Schema({
+export const UserSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: true
@@ -28,7 +28,6 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
-UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ status: 1 });
 
 export const User = mongoose.model("User", UserSchema);

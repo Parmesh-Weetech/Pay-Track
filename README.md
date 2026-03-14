@@ -1,98 +1,91 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PayTrack
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+PayTrack is a NestJS + MongoDB backend focused on e-commerce payment flow data modeling. The current codebase is schema-first with a seed pipeline to generate large datasets for local testing.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Status**: Services and REST controllers are present but currently minimal (no implemented business logic). The data model and seed workflow are the primary completed parts.
 
-## Description
+## Tech Stack
+- Node.js + TypeScript
+- NestJS 11
+- MongoDB + Mongoose
+- Faker for seed data
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Domain Model
+Collections and relationships:
+- **User**: customer identity and status.
+- **Product**: catalog items.
+- **Cart**: belongs to a user; contains cart items referencing products.
+- **Order**: belongs to a user; contains order items referencing products.
+- **Transaction**: belongs to an order and user; contains embedded transaction history.
+- **TransactionHistory**: stored both embedded in Transaction and in its own collection with `transactionId` for direct lookup.
 
-## Project setup
+Relationship map:
+- User -> Orders (1:N)
+- User -> Carts (1:N)
+- Order -> OrderItems -> Product (N:1)
+- Cart -> CartItems -> Product (N:1)
+- Order -> Transaction (1:1 in seed generation)
+- Transaction -> TransactionHistory (embedded) + TransactionHistory collection (via `transactionId`)
 
+## Project Structure
+- `src/app/*` modules for user, product, cart, order, transaction, transaction_history
+- `src/app/*/schemas/*.schema.ts` MongoDB schema definitions
+- `src/app/*/types/*.ts` enums and interfaces
+- `scripts/seed.ts` data seeding pipeline
+- `scripts/type.ts` seed type definitions
+
+## Setup
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
-
+## Run
 ```bash
-# development
-$ npm run start
+# dev
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# prod
+npm run start:prod
 ```
 
-## Run tests
+The app listens on `PORT` (defaults to `3000`).
 
+## Seeding
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run seed
 ```
 
-## Deployment
+Seed behavior:
+- Each collection targets **100,000** records.
+- If a collection already has 100,000 records, it is skipped.
+- If it has fewer, only the remaining records are added.
+- `TransactionHistory` is inserted both embedded in `Transaction` and as a standalone collection with `transactionId`.
+- A backfill step creates missing `TransactionHistory` records from existing transactions.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Important notes:
+- The seed script currently uses a hardcoded Mongo URL in `scripts/seed.ts`.
+- Users use deterministic unique emails: `user_<index>@example.com`.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Scripts
+- `npm run start` - start server
+- `npm run start:dev` - watch mode
+- `npm run start:prod` - production build
+- `npm run test` - unit tests
+- `npm run test:e2e` - e2e tests
+- `npm run seed` - seed database
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Data Model Details
+Schemas are defined in:
+- `src/app/user/schemas/user.schema.ts`
+- `src/app/product/schemas/product.schema.ts`
+- `src/app/cart/schemas/cart.schema.ts`
+- `src/app/order/schemas/order.schema.ts`
+- `src/app/transaction/schemas/transaction.schema.ts`
+- `src/app/transaction_history/schemas/transaction_history.schema.ts`
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Indexes are explicitly defined on commonly queried fields (see schema files for details).
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Next Steps (Optional)
+- Add actual service and controller logic for CRUD and domain workflows.
+- Move Mongo connection string to environment config.
+- Add validation DTOs and request-level schema validation.
