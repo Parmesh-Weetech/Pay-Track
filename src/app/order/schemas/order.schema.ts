@@ -1,67 +1,88 @@
-import mongoose from "mongoose";
+import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { OrderStatus } from "../types/order-status";
 import { PaymentStatus } from "../types/payment-status";
 
-const OrderItemSchema = new mongoose.Schema({
-    productId: {
-        type: mongoose.Schema.Types.ObjectId,
+@Schema({ _id: false })
+export class OrderItemSchema {
+    @Prop({
+        type: Types.ObjectId,
         ref: "Product",
         required: true
-    },
+    })
+    productId: Types.ObjectId;
 
-    quantity: {
+    @Prop({
         type: Number,
         default: 1
-    },
+    })
+    quantity: number;
 
-    price: Number,
+    @Prop({
+        type: Number
+    })
+    price: number;
 
-    subTotal: Number
-})
+    @Prop({
+        type: Number
+    })
+    subTotal: number;
+}
 
-const OrderSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+export const OrderItem = SchemaFactory.createForClass(OrderItemSchema);
 
-    items: [OrderItemSchema],
-
-    orderNumber: {
-        type: String,
-        required: true,
-        unique: true
-    },
-
-    orderStatus: {
-        type: String,
-        enum: OrderStatus,
-        required: true,
-        default: OrderStatus.PENDING
-    },
-
-    totalPrice: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    
-    paymentStatus: {
-        type: String,
-        required: true,
-        enum: PaymentStatus
-    }
-}, {
+@Schema({
     timestamps: {
         createdAt: true,
         updatedAt: true
     }
-});
+})
+export class OrderSchema extends Document {
+    @Prop({
+        type: Types.ObjectId,
+        ref: "User",
+        required: true
+    })
+    userId: Types.ObjectId;
 
-OrderSchema.index({ orderNumber: 1 }, { unique: true });
-OrderSchema.index({ userId: 1, createdAt: -1 });
-OrderSchema.index({ orderStatus: 1 });
-OrderSchema.index({ paymentStatus: 1 });
+    @Prop({
+        type: [OrderItem]
+    })
+    items: OrderItemSchema[];
 
-export const Order = mongoose.model("Order", OrderSchema);
+    @Prop({
+        required: true,
+        unique: true,
+        type: String
+    })
+    orderNumber: string;
+
+    @Prop({
+        required: true,
+        enum: OrderStatus,
+        type: String,
+        default: OrderStatus.PENDING
+    })
+    orderStatus: OrderStatus;
+
+    @Prop({
+        required: true,
+        default: 0,
+        type: Number
+    })
+    totalPrice: number;
+
+    @Prop({
+        required: true,
+        enum: PaymentStatus,
+        type: String
+    })
+    paymentStatus: PaymentStatus;
+}
+
+export const Order = SchemaFactory.createForClass(OrderSchema);
+
+Order.index({ orderNumber: 1 }, { unique: true });
+Order.index({ userId: 1, createdAt: -1 });
+Order.index({ orderStatus: 1 });
+Order.index({ paymentStatus: 1 });

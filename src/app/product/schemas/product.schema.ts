@@ -1,41 +1,48 @@
-import mongoose from "mongoose";
+import { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
-const ProductSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
-    },
-
-    description: {
-        type: String,
-        required: false,
-    },
-
-    price: {
-        type: Number,
-        required: true
-    },
-
-    category: {
-        type: String,
-        required: true
-    },
-    
-    isAvailable: {
-        type: Boolean,
-        required: true,
-        default: true
-    }
-}, {
+@Schema({
     timestamps: {
         createdAt: true,
         updatedAt: true
     }
-});
+})
+export class ProductSchema extends Document {
+    @Prop({
+        required: true,
+        type: String
+    })
+    name: string;
 
-ProductSchema.index({ category: 1 });
-ProductSchema.index({ isAvailable: 1 });
-ProductSchema.index({ price: 1 });
-ProductSchema.index({ name: 1 });
+    @Prop({
+        required: false,
+        type: String
+    })
+    description: string;
 
-export const Product = mongoose.model("Product", ProductSchema);
+    @Prop({
+        required: true,
+        type: Number
+    })
+    price: number;
+
+    @Prop({
+        required: true,
+        type: String
+    })
+    category: string;
+
+    @Prop({
+        required: true,
+        default: true,
+        type: Boolean
+    })
+    isAvailable: boolean;
+}
+
+export const Product = SchemaFactory.createForClass(ProductSchema);
+
+Product.index({ category: 1 });
+Product.index({ isAvailable: 1 });
+Product.index({ price: 1 });
+Product.index({ name: 1 });

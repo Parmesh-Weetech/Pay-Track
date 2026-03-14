@@ -1,60 +1,69 @@
-import mongoose from "mongoose";
+import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { PaymentMethod } from "../types/payment-method";
 import { TransactionStatus } from "../types/transaction-status";
-import { TransactionHistorySchema } from "../../transaction_history/schemas/transaction_history.schema";
-import { TransactionType } from "../types/transaction.interface";
+import { TransactionHistory, TransactionHistorySchema } from "../../transaction_history/schemas/transaction_history.schema";
 
-const TransactionSchema = new mongoose.Schema<TransactionType>({
-    orderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Order",
-        required: true
-    },
-
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-
-    transactionNumber: {
-        type: String,
-        required: true,
-        unique: true
-    },
-
-    paymentMethod: {
-        type: String,
-        enum: PaymentMethod,
-        required: true
-    },
-
-    transactionStatus: {
-        type: String,
-        enum: TransactionStatus,
-        required: true,
-        default: TransactionStatus.PENDING
-    },
-
-    totalAmount: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-
-    history: [TransactionHistorySchema]
-
-}, {
+@Schema({
     timestamps: {
         createdAt: true,
         updatedAt: true
     }
-});
+})
+export class TransactionSchema extends Document {
+    @Prop({
+        type: Types.ObjectId,
+        ref: "Order",
+        required: true
+    })
+    orderId: Types.ObjectId;
 
-TransactionSchema.index({ transactionNumber: 1 }, { unique: true });
-TransactionSchema.index({ userId: 1, createdAt: -1 });
-TransactionSchema.index({ orderId: 1 });
-TransactionSchema.index({ transactionStatus: 1 });
-TransactionSchema.index({ paymentMethod: 1 });
+    @Prop({
+        type: Types.ObjectId,
+        ref: "User",
+        required: true
+    })
+    userId: Types.ObjectId;
 
-export const Transaction = mongoose.model<TransactionType>("Transaction", TransactionSchema);
+    @Prop({
+        type: String,
+        required: true,
+        unique: true
+    })
+    transactionNumber: string;
+
+    @Prop({
+        type: String,
+        enum: PaymentMethod,
+        required: true
+    })
+    paymentMethod: PaymentMethod;
+
+    @Prop({
+        type: String,
+        enum: TransactionStatus,
+        required: true,
+        default: TransactionStatus.PENDING
+    })
+    transactionStatus: TransactionStatus;
+
+    @Prop({
+        type: Number,
+        required: true,
+        default: 0
+    })
+    totalAmount: number;
+
+    @Prop({
+        type: [TransactionHistory]
+    })
+    history: TransactionHistorySchema[];
+}
+
+export const Transaction = SchemaFactory.createForClass(TransactionSchema);
+
+Transaction.index({ transactionNumber: 1 }, { unique: true });
+Transaction.index({ userId: 1, createdAt: -1 });
+Transaction.index({ orderId: 1 });
+Transaction.index({ transactionStatus: 1 });
+Transaction.index({ paymentMethod: 1 });

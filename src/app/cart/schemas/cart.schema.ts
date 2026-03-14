@@ -1,56 +1,73 @@
-import mongoose from "mongoose";
+import { Document, Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { CartStatus } from "../types/cart-status";
 
-const CartItemSchema = new mongoose.Schema({
-    productId: {
-        type: mongoose.Schema.Types.ObjectId,
+@Schema({ _id: false })
+export class CartItemSchema {
+    @Prop({
+        type: Types.ObjectId,
         ref: "Product",
         required: true
-    },
+    })
+    productId: Types.ObjectId;
 
-    quantity: {
+    @Prop({
         type: Number,
         default: 1
-    },
+    })
+    quantity: number;
 
-    price: Number
-});
+    @Prop({
+        type: Number
+    })
+    price: number;
+}
 
-const CartSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+export const CartItem = SchemaFactory.createForClass(CartItemSchema);
 
-    items: [CartItemSchema],
-
-    totalItem: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-
-    totalPrice: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-
-    status: {
-        type: String,
-        required: true,
-        enum: CartStatus
-    }
-}, {
+@Schema({
     timestamps: {
         createdAt: true,
         updatedAt: true
     }
-});
+})
+export class CartSchema extends Document {
+    @Prop({
+        type: Types.ObjectId,
+        ref: "User",
+        required: true
+    })
+    userId: Types.ObjectId;
 
-CartSchema.index({ userId: 1 });
-CartSchema.index({ status: 1 });
-CartSchema.index({ userId: 1, status: 1 });
+    @Prop({
+        type: [CartItem]
+    })
+    items: CartItemSchema[];
 
-export const Cart = mongoose.model("Cart", CartSchema);
+    @Prop({
+        required: true,
+        default: 0,
+        type: Number
+    })
+    totalItem: number;
+
+    @Prop({
+        required: true,
+        default: 0,
+        type: Number
+    })
+    totalPrice: number;
+
+    @Prop({
+        required: true,
+        enum: CartStatus,
+        type: String
+    })
+    status: CartStatus;
+}
+
+export const Cart = SchemaFactory.createForClass(CartSchema);
+
+Cart.index({ userId: 1 });
+Cart.index({ status: 1 });
+Cart.index({ userId: 1, status: 1 });
