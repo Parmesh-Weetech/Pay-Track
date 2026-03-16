@@ -14,9 +14,7 @@ export class UserService {
     ) { }
 
     async listUser(query: PaginationFilter): Promise<UserListResponse> {
-        const page = query.page ?? 1;
-        const pageSize = query.pageSize ?? 10;
-        const skip = (page - 1) * pageSize;
+        const skip = (query.page - 1) * query.pageSize;
 
         const filter: Record<string, unknown> = {};
 
@@ -33,19 +31,9 @@ export class UserService {
             ];
         }
 
-        const allowedSortFields = new Set([
-            'createdAt',
-            'firstName',
-            'lastName',
-            'email',
-            'status'
-        ]);
+        const sortField = query.orderBy ? query.orderBy : 'createdAt';
 
-        const sortField = query.orderBy && allowedSortFields.has(query.orderBy)
-            ? query.orderBy
-            : 'createdAt';
-
-        const sortDirection = query.sortOrder === SORT_ORDER.ASC ? 1 : -1;
+        const sortDirection = query.sortOrder === SORT_ORDER.DESC ? -1 : 1;
 
         const [items, total] = await Promise.all([
             this.userModel.aggregate([
@@ -54,14 +42,14 @@ export class UserService {
                     $sort: { [sortField]: sortDirection }
                 },
                 { $skip: skip },
-                { $limit: pageSize }
+                { $limit: query.pageSize }
             ]),
             this.userModel.countDocuments(filter)
         ]);
 
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        const hasNext = page < totalPages;
-        const hasPrev = page > 1;
+        const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
+        const hasNext = query.page < totalPages;
+        const hasPrev = query.page > 1;
 
         return {
             success: true,
@@ -71,8 +59,8 @@ export class UserService {
             data: {
                 items,
                 total,
-                page,
-                pageSize,
+                page: query.page,
+                pageSize: query.pageSize,
                 totalPages,
                 hasNext,
                 hasPrev
