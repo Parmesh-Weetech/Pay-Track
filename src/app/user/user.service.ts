@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserSchema } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { PaginationFilter } from '../common/pagination/pagination-filter';
 import { SORT_ORDER } from '../common/types/sort-type';
-import { UserListResponse } from '../rest/dtos/response/user-list-response.dto';
+import { UserListResponse, UserResponse } from '../rest/dtos/response/user-response.dto';
 
 @Injectable()
 export class UserService {
@@ -77,6 +77,62 @@ export class UserService {
                 hasNext,
                 hasPrev
             }
+        };
+    }
+
+    async getUserDetails(
+        userId: string,
+        cart: boolean,
+        orders: boolean,
+        transactions: boolean
+    ): Promise<UserResponse> {
+        const pipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(userId) } }
+        ];
+
+        if (cart) {
+            pipeline.push({
+                $lookup: {
+                    from: "carts",
+                    localField: "_id",
+                    foreignField: "userId",
+                    as: "cart"
+                }
+            });
+        }
+
+        if (orders) {
+            pipeline.push({
+                $lookup: {
+                    from: "orders",
+                    localField: "_id",
+                    foreignField: "userId",
+                    as: "orders"
+                }
+            });
+        }
+
+        if (transactions) {
+            pipeline.push({
+                $lookup: {
+                    from: "transactions",
+                    localField: "_id",
+                    foreignField: "userId",
+                    as: "transactions"
+                }
+            });
+        }
+
+        pipeline.push({ $limit: 1 });
+
+        const [user] = await this.userModel.aggregate(pipeline);
+
+        return {
+            success: true,
+            expired: false,
+            message: "User Fetched Successful.",
+            statusCode: 200,
+            data: user ?? null
         };
     }
 }
