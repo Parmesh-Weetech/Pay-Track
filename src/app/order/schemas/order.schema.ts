@@ -19,7 +19,8 @@ export class OrderItemSchema {
     quantity: number;
 
     @Prop({
-        type: Number
+        type: Number,
+        required: true
     })
     price: number;
 
@@ -84,5 +85,4 @@ export const Order = SchemaFactory.createForClass(OrderSchema);
 
 Order.index({ orderNumber: 1 }, { unique: true });
 Order.index({ userId: 1, createdAt: -1 });
-Order.index({ orderStatus: 1 });
-Order.index({ paymentStatus: 1 });
+Order.index({ userId: 1, orderStatus: 1 });

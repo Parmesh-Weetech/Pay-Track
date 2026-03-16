@@ -18,7 +18,8 @@ export class CartItemSchema {
     quantity: number;
 
     @Prop({
-        type: Number
+        type: Number,
+        required: true
     })
     price: number;
 }
@@ -69,5 +70,4 @@ export class CartSchema extends Document {
 export const Cart = SchemaFactory.createForClass(CartSchema);
 
 Cart.index({ userId: 1 });
-Cart.index({ status: 1 });
 Cart.index({ userId: 1, status: 1 });
