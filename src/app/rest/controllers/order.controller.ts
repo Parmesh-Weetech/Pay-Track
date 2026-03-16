@@ -3,6 +3,7 @@ import { PaginationFilter } from "../../common/pagination/pagination-filter";
 import { OrderListResponse, OrderResponse } from "../dtos/response/order-response.dto";
 import { OrderService } from "../../order/order.service";
 import { LogAround } from "src/app/common/logger/log-around";
+import { ListOrderReqDTO } from "../dtos/request/order-list-req.dto";
 
 @Controller({ path: 'order' })
 export class OrderController {
@@ -14,7 +15,7 @@ export class OrderController {
         ignoreReturn: true
     })
     async listOrders(
-        @Query() query: PaginationFilter
+        @Query() query: ListOrderReqDTO
     ): Promise<OrderListResponse> {
         return await this.orderService.listOrders(query);
     }

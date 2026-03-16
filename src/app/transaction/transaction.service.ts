@@ -18,8 +18,8 @@ export class TransactionService {
 
         const filter: Record<string, unknown> = {};
 
-        if (query.status) {
-            filter.status = query.status;
+        if (query.transactionStatus) {
+            filter.status = query.transactionStatus;
         }
 
         if (query.paymentMethod) {

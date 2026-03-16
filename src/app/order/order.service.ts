@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { OrderSchema } from './schemas/order.schema';
 import { operators } from '../user/types/operator-type';
+import { ListOrderReqDTO } from '../rest/dtos/request/order-list-req.dto';
 
 @Injectable()
 export class OrderService {
@@ -15,23 +16,35 @@ export class OrderService {
         private readonly orderModel: Model<OrderSchema>
     ) { }
     async listOrders(
-        query: PaginationFilter
+        query: ListOrderReqDTO
     ): Promise<OrderListResponse> {
         const skip = (query.page - 1) * query.pageSize;
 
         const filter: Record<string, unknown> = {};
 
-        if (query.status) {
-            filter.status = query.status;
+        if (query.orderStatus) {
+            filter.orderStatus = query.orderStatus;
         }
 
-        if (query.search) {
-            const searchRegex = new RegExp(query.search, 'i');
-            filter.$or = [
-                { firstName: searchRegex },
-                { lastName: searchRegex },
-                { email: searchRegex }
-            ];
+        if (query.paymentStatus) {
+            filter.paymentStatus = query.paymentStatus;
+        }
+
+        if (query.paymentMethod) {
+            filter.paymentMethod = query.paymentMethod;
+        }
+
+        if (query.totalPrice) {
+            const minTotalPrice = Number(query.totalPrice);
+            if (Number.isFinite(minTotalPrice)) {
+                filter.totalPrice = { $gt: minTotalPrice };
+            }
+        }
+
+        if (query.totalPrice && query.operator && operators[query.operator]) {
+            filter.totalPrice = {
+                [operators[query.operator]]: Number(query.totalPrice)
+            };
         }
 
         const sortField = query.orderBy ? query.orderBy : 'createdAt';
