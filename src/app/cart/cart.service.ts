@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CartSchema } from './schemas/cart.schema';
 import { Model } from 'mongoose';
 import { ListCartReqDTO } from '../rest/dtos/request/cart-list-req.dto';
-import { CartListResponse } from '../rest/dtos/response/cart-response.dto';
+import { CartListResponse, CartResponse } from '../rest/dtos/response/cart-response.dto';
 import { operators } from '../user/types/operator-type';
 import { SORT_ORDER } from '../common/types/sort-type';
 
@@ -38,7 +38,16 @@ export class CartService {
             };
         }
 
-        const sortField = query.orderBy ? query.orderBy : 'createdAt';
+        const allowedSortFields = new Set([
+            'createdAt',
+            'totalPrice',
+            'totalItem',
+            'status'
+        ]);
+
+        const sortField = query.orderBy && allowedSortFields.has(query.orderBy)
+            ? query.orderBy
+            : 'createdAt';
 
         const sortDirection = query.sortOrder === SORT_ORDER.DESC ? -1 : 1;
 
@@ -72,6 +81,18 @@ export class CartService {
                 hasNext,
                 hasPrev
             }
+        };
+    }
+
+    async getCartById(cartId: string): Promise<CartResponse> {
+        const cart = await this.cartModel.findById(cartId);
+
+        return {
+            success: true,
+            expired: false,
+            message: "Cart Fetched Successfully.",
+            statusCode: 200,
+            data: cart ?? null
         };
     }
 }

@@ -10,5 +10,5 @@ export class OrderListResponse extends APIResponse {
 
 export class OrderResponse extends APIResponse {
     @ApiProperty({ type: () => OrderSchema })
-    data: OrderSchema
+    data: OrderSchema | null;
 }

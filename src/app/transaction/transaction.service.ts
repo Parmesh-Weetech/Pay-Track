@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ListTransactionReqDTO } from '../rest/dtos/request/transaction-list-req.dto';
-import { TransactionListResponse } from '../rest/dtos/response/transaction-response.dto';
+import { TransactionListResponse, TransactionResponse } from '../rest/dtos/response/transaction-response.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TransactionSchema } from './schemas/transaction.schema';
@@ -19,14 +19,24 @@ export class TransactionService {
         const filter: Record<string, unknown> = {};
 
         if (query.transactionStatus) {
-            filter.status = query.transactionStatus;
+            filter.transactionStatus = query.transactionStatus;
         }
 
         if (query.paymentMethod) {
             filter.paymentMethod = query.paymentMethod;
         }
 
-        const sortField = query.orderBy ? query.orderBy : 'createdAt';
+        const allowedSortFields = new Set([
+            'createdAt',
+            'transactionNumber',
+            'transactionStatus',
+            'totalAmount',
+            'paymentMethod'
+        ]);
+
+        const sortField = query.orderBy && allowedSortFields.has(query.orderBy)
+            ? query.orderBy
+            : 'createdAt';
 
         const sortDirection = query.sortOrder === SORT_ORDER.DESC ? -1 : 1;
 
@@ -60,6 +70,18 @@ export class TransactionService {
                 hasNext,
                 hasPrev
             }
+        };
+    }
+
+    async getTransactionById(transactionId: string): Promise<TransactionResponse> {
+        const transaction = await this.transactionModel.findById(transactionId);
+
+        return {
+            success: true,
+            expired: false,
+            message: "Transaction Fetched Successfully.",
+            statusCode: 200,
+            data: transaction ?? null
         };
     }
 }

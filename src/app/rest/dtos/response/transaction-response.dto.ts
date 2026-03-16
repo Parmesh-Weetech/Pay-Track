@@ -10,5 +10,5 @@ export class TransactionListResponse extends APIResponse {
 
 export class TransactionResponse extends APIResponse {
     @ApiProperty({ type: () => TransactionSchema })
-    data: TransactionSchema
+    data: TransactionSchema | null;
 }

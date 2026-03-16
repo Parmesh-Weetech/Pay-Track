@@ -1,5 +1,4 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
-import { PaginationFilter } from "../../common/pagination/pagination-filter";
 import { OrderListResponse, OrderResponse } from "../dtos/response/order-response.dto";
 import { OrderService } from "../../order/order.service";
 import { LogAround } from "src/app/common/logger/log-around";
@@ -24,18 +23,10 @@ export class OrderController {
     @LogAround({
         ignoreReturn: true
     })
-    async getOrderDetails(
-        @Param('orderId') orderId: string,
-        @Query('user') user?: string,
-        @Query('transaction') transaction?: string,
-        @Query('product') product?: string
+    async getOrderById(
+        @Param('orderId') orderId: string
     ): Promise<OrderResponse> {
-        return await this.orderService.getOrderDetails(
-            orderId,
-            user === 'true',
-            transaction === 'true',
-            product === 'true'
-        );
+        return await this.orderService.getOrderById(orderId);
     }
 
     @Get(':orderId/transactions')

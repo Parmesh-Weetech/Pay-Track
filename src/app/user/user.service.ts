@@ -32,7 +32,17 @@ export class UserService {
             ];
         }
 
-        const sortField = query.orderBy ? query.orderBy : 'createdAt';
+        const allowedSortFields = new Set([
+            'createdAt',
+            'firstName',
+            'lastName',
+            'email',
+            'status'
+        ]);
+
+        const sortField = query.orderBy && allowedSortFields.has(query.orderBy)
+            ? query.orderBy
+            : 'createdAt';
 
         const sortDirection = query.sortOrder === SORT_ORDER.DESC ? -1 : 1;
 
@@ -69,52 +79,8 @@ export class UserService {
         };
     }
 
-    async getUserDetails(
-        userId: string,
-        cart: boolean,
-        orders: boolean,
-        transactions: boolean
-    ): Promise<UserResponse> {
-        const pipeline: PipelineStage[] = [
-            { $match: { _id: new Types.ObjectId(userId) } }
-        ];
-
-        if (cart) {
-            pipeline.push({
-                $lookup: {
-                    from: "carts",
-                    localField: "_id",
-                    foreignField: "userId",
-                    as: "cart"
-                }
-            });
-        }
-
-        if (orders) {
-            pipeline.push({
-                $lookup: {
-                    from: "orders",
-                    localField: "_id",
-                    foreignField: "userId",
-                    as: "orders"
-                }
-            });
-        }
-
-        if (transactions) {
-            pipeline.push({
-                $lookup: {
-                    from: "transactions",
-                    localField: "_id",
-                    foreignField: "userId",
-                    as: "transactions"
-                }
-            });
-        }
-
-        pipeline.push({ $limit: 1 });
-
-        const [user] = await this.userModel.aggregate(pipeline);
+    async getUserById(userId: string): Promise<UserResponse> {
+        const user = await this.userModel.findById(userId);
 
         return {
             success: true,

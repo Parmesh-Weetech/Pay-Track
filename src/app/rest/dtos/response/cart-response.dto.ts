@@ -10,5 +10,5 @@ export class CartListResponse extends APIResponse {
 
 export class CartResponse extends APIResponse {
     @ApiProperty({ type: () => CartSchema })
-    data: CartSchema
+    data: CartSchema | null;
 }

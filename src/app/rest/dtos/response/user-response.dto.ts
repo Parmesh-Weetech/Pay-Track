@@ -10,5 +10,5 @@ export class UserListResponse extends APIResponse {
 
 export class UserResponse extends APIResponse {
     @ApiProperty({ type: () => UserSchema })
-    data: UserSchema
+    data: UserSchema | null;
 }

@@ -47,7 +47,18 @@ export class OrderService {
             };
         }
 
-        const sortField = query.orderBy ? query.orderBy : 'createdAt';
+        const allowedSortFields = new Set([
+            'createdAt',
+            'orderNumber',
+            'orderStatus',
+            'paymentStatus',
+            'totalPrice',
+            'userId'
+        ]);
+
+        const sortField = query.orderBy && allowedSortFields.has(query.orderBy)
+            ? query.orderBy
+            : 'createdAt';
 
         const sortDirection = query.sortOrder === SORT_ORDER.DESC ? -1 : 1;
 
@@ -84,55 +95,16 @@ export class OrderService {
         };
     }
 
-    async getOrderDetails(orderId: string, user: boolean, transaction: boolean, product: boolean): Promise<OrderResponse> {
-        const pipeline: PipelineStage[] = [
-            { $match: { _id: new Types.ObjectId(orderId) } }
-        ];
-
-        if (user) {
-            pipeline.push({
-                $lookup: {
-                    from: "users",
-                    as: "user",
-                    localField: "userId",
-                    foreignField: "_id"
-                }
-            });
-        }
-
-        if (transaction) {
-            pipeline.push({
-                $lookup: {
-                    from: "transactions",
-                    as: "transaction",
-                    localField: "_id",
-                    foreignField: "orderId"
-                }
-            });
-        }
-
-        if (product) {
-            pipeline.push({
-                $lookup: {
-                    from: "products",
-                    as: 'product',
-                    localField: "items.productId",
-                    foreignField: "_id"
-                }
-            });
-        }
-
-        pipeline.push({ $limit: 1 });
-
-        const [order] = await this.orderModel.aggregate(pipeline);
+    async getOrderById(orderId: string): Promise<OrderResponse> {
+        const order = await this.orderModel.findById(orderId);
 
         return {
             success: true,
+            data: order ?? null,
             expired: false,
-            message: "Orders fetched successfully.",
-            statusCode: 200,
-            data: order
-        }
+            message: "Order Fetched Successfully.",
+            statusCode: 200
+        };
     }
 
     async getOrderWithTransactions(
@@ -160,7 +132,7 @@ export class OrderService {
         }
 
         if (totalAmount && operator && operators[operator]) {
-            orderMatch.totalPrice = {
+            orderMatch.totalAmount = {
                 [operators[operator]]: Number(totalAmount)
             };
         }
@@ -226,7 +198,7 @@ export class OrderService {
         }
 
         if (price && operator && operators[operator]) {
-            orderMatch.totalPrice = {
+            orderMatch.price = {
                 [operators[operator]]: Number(price)
             };
         }
