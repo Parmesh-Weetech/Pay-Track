@@ -43,12 +43,54 @@ export class UserController {
     async getUserWithCartDetails(
         @Param('userId') userId: string,
         @Query('status') cartStatus: string,
-        @Query('totalPrice') totalPrice: number
+        @Query('totalPrice') totalPrice: number,
+        @Query('operator') operator: string
     ): Promise<UserResponse> {
         return await this.userService.getUserWithCartDetails(
             userId,
             cartStatus,
-            totalPrice
+            totalPrice,
+            operator
+        )
+    }
+
+    @Get(":userId/orders")
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getUserWithOrderDetails(
+        @Param('userId') userId: string,
+        @Query('orderStatus') orderStatus: string,
+        @Query('paymentStatus') paymentStatus: string,
+        @Query('totalPrice') totalPrice: number,
+        @Query('operator') operator: string
+    ): Promise<UserResponse> {
+        return await this.userService.getUserWithOrderDetails(
+            userId,
+            orderStatus,
+            paymentStatus,
+            totalPrice,
+            operator
+        )
+    }
+
+    @Get(':userId/transactions')
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getUserWithTransactionDetails(
+        @Param('userId') userId: string,
+        @Query('paymentMethod') paymentMethod: string,
+        @Query('totalAmount') totalAmount: number,
+        @Query('transactionStatus') transactionStatus: string,
+        @Query('operator') operator: string
+    ): Promise<UserResponse> {
+        return await this.userService.getUserWithTransactionDetails(
+            userId,
+            paymentMethod,
+            totalAmount,
+            transactionStatus,
+            operator
         )
     }
 }

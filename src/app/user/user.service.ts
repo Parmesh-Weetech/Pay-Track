@@ -5,6 +5,7 @@ import { Model, PipelineStage, Types } from 'mongoose';
 import { PaginationFilter } from '../common/pagination/pagination-filter';
 import { SORT_ORDER } from '../common/types/sort-type';
 import { UserListResponse, UserResponse } from '../rest/dtos/response/user-response.dto';
+import { operators } from './types/operator-type';
 
 @Injectable()
 export class UserService {
@@ -127,7 +128,8 @@ export class UserService {
     async getUserWithCartDetails(
         userId: string,
         cartStatus: string,
-        totalPrice: number
+        totalPrice: number,
+        operator: string
     ): Promise<UserResponse> {
         const cartMatch: Record<string, unknown> = {};
 
@@ -140,6 +142,12 @@ export class UserService {
             if (Number.isFinite(minTotalPrice)) {
                 cartMatch.totalPrice = { $gt: minTotalPrice };
             }
+        }
+
+        if (totalPrice && operator && operators[operator]) {
+            cartMatch.totalPrice = {
+                [operators[operator]]: Number(totalPrice)
+            };
         }
 
         const userPipeline: PipelineStage[] = [
@@ -173,6 +181,136 @@ export class UserService {
             data: user ?? null,
             expired: false,
             message: "User with cart fetched successfully.",
+            statusCode: 200
+        }
+    }
+
+    async getUserWithOrderDetails(
+        userId: string,
+        orderStatus: string,
+        paymentStatus: string,
+        totalPrice: number,
+        operator: string
+    ): Promise<UserResponse> {
+        const orderMatch: Record<string, unknown> = {};
+
+        if (orderStatus) {
+            orderMatch.orderStatus = orderStatus;
+        }
+
+        if (paymentStatus) {
+            orderMatch.paymentStatus = paymentStatus;
+        }
+
+        if (totalPrice) {
+            const minTotalPrice = Number(totalPrice);
+            if (Number.isFinite(minTotalPrice)) {
+                orderMatch.totalPrice = { $gt: minTotalPrice };
+            }
+        }
+
+        if (totalPrice && operator && operators[operator]) {
+            orderMatch.totalPrice = {
+                [operators[operator]]: Number(totalPrice)
+            };
+        }
+
+        const userPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(userId) } },
+            {
+                $lookup: {
+                    from: 'orders',
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                ...orderMatch,
+                                $expr: {
+                                    $eq: [
+                                        "$userId",
+                                        "$$userId"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'order'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [user] = await this.userModel.aggregate(userPipeline);
+
+        return {
+            success: true,
+            data: user ?? null,
+            expired: false,
+            message: "User with orders fetched successfully.",
+            statusCode: 200
+        }
+    }
+
+    async getUserWithTransactionDetails(
+        userId: string,
+        paymentMethod: string,
+        totalAmount: number,
+        transactionStatus: string,
+        operator: string
+    ): Promise<UserResponse> {
+        const transactionMatch: Record<string, unknown> = {};
+
+        if (transactionStatus) {
+            transactionMatch.transactionStatus = transactionStatus;
+        }
+
+        if (paymentMethod) {
+            transactionMatch.paymentMethod = paymentMethod;
+        }
+
+        if (totalAmount) {
+            const minTotalPrice = Number(totalAmount);
+            if (Number.isFinite(minTotalPrice)) {
+                transactionMatch.totalAmount = { $gt: minTotalPrice };
+            }
+        }
+
+        if (totalAmount && operator && operators[operator]) {
+            transactionMatch.totalPrice = {
+                [operators[operator]]: Number(totalAmount)
+            };
+        }
+
+        const userPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(userId) } },
+            {
+                $lookup: {
+                    from: 'transactions',
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                ...transactionMatch,
+                                $expr: {
+                                    $eq: [
+                                        "$userId",
+                                        "$$userId"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'transaction'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [user] = await this.userModel.aggregate(userPipeline);
+
+        return {
+            success: true,
+            data: user ?? null,
+            expired: false,
+            message: "User with transactions fetched successfully.",
             statusCode: 200
         }
     }
