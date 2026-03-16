@@ -35,4 +35,20 @@ export class UserController {
             transactions === 'true'
         );
     }
+
+    @Get(":userId/cart")
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getUserWithCartDetails(
+        @Param('userId') userId: string,
+        @Query('status') cartStatus: string,
+        @Query('totalPrice') totalPrice: number
+    ): Promise<UserResponse> {
+        return await this.userService.getUserWithCartDetails(
+            userId,
+            cartStatus,
+            totalPrice
+        )
+    }
 }

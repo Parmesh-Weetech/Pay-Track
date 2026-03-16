@@ -123,4 +123,57 @@ export class UserService {
             data: user ?? null
         };
     }
+
+    async getUserWithCartDetails(
+        userId: string,
+        cartStatus: string,
+        totalPrice: number
+    ): Promise<UserResponse> {
+        const cartMatch: Record<string, unknown> = {};
+
+        if (cartStatus) {
+            cartMatch.status = cartStatus;
+        }
+
+        if (totalPrice) {
+            const minTotalPrice = Number(totalPrice);
+            if (Number.isFinite(minTotalPrice)) {
+                cartMatch.totalPrice = { $gt: minTotalPrice };
+            }
+        }
+
+        const userPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(userId) } },
+            {
+                $lookup: {
+                    from: 'carts',
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                ...cartMatch,
+                                $expr: {
+                                    $eq: [
+                                        "$userId",
+                                        "$$userId"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'cart'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [user] = await this.userModel.aggregate(userPipeline);
+
+        return {
+            success: true,
+            data: user ?? null,
+            expired: false,
+            message: "User with cart fetched successfully.",
+            statusCode: 200
+        }
+    }
 }
