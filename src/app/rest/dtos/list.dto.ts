@@ -1,7 +1,5 @@
-import { OrderSchema } from "../../order/schemas/order.schema";
-
-export class OrderList {
-    items: OrderSchema[];
+export class ListResponse {
+    items: any[];
     total: number;
     page: number;
     pageSize: number;

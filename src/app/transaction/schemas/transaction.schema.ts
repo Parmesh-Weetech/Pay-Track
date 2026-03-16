@@ -62,7 +62,6 @@ export class TransactionSchema extends Document {
 
 export const Transaction = SchemaFactory.createForClass(TransactionSchema);
 
-Transaction.index({ transactionNumber: 1 }, { unique: true });
 Transaction.index({ userId: 1, createdAt: -1 });
 Transaction.index({ orderId: 1 });
 Transaction.index({ userId: 1, transactionStatus: 1 });
