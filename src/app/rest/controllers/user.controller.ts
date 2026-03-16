@@ -22,18 +22,10 @@ export class UserController {
     @LogAround({
         ignoreReturn: true
     })
-    async getUserDetails(
-        @Param('userId') userId: string,
-        @Query('cart') cart?: string,
-        @Query('orders') orders?: string,
-        @Query('transactions') transactions?: string,
+    async getUserById(
+        @Param('userId') userId: string
     ): Promise<UserResponse> {
-        return await this.userService.getUserDetails(
-            userId,
-            cart === 'true',
-            orders === 'true',
-            transactions === 'true'
-        );
+        return await this.userService.getUserById(userId);
     }
 
     @Get(":userId/cart")

@@ -1,14 +1,14 @@
 import { APIResponse } from "../../../common/helper/response"
-import { OrderList } from "../order-list.dto"
 import { OrderSchema } from "../../../order/schemas/order.schema"
 import { ApiProperty } from "@nestjs/swagger"
+import { ListResponse } from "../list.dto"
 
 export class OrderListResponse extends APIResponse {
-    @ApiProperty({ type: () => OrderList })
-    data: OrderList
+    @ApiProperty({ type: () => ListResponse })
+    data: ListResponse
 }
 
 export class OrderResponse extends APIResponse {
     @ApiProperty({ type: () => OrderSchema })
-    data: OrderSchema
+    data: OrderSchema | null;
 }
