@@ -83,6 +83,5 @@ export class OrderSchema extends Document {
 
 export const Order = SchemaFactory.createForClass(OrderSchema);
 
-Order.index({ orderNumber: 1 }, { unique: true });
 Order.index({ userId: 1, createdAt: -1 });
 Order.index({ userId: 1, orderStatus: 1 });

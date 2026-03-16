@@ -45,5 +45,3 @@ export class UserSchema extends Document {
 }
 
 export const User = SchemaFactory.createForClass(UserSchema);
-
-User.index({ email: 1 }, { unique: true });
