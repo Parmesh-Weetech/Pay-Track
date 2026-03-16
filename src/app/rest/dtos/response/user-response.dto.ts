@@ -1,4 +1,4 @@
-import { ApiProperty, ApiRequestTimeoutResponse } from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import { APIResponse } from "src/app/common/helper/response";
 import { UserList } from "../user-list.dto";
 import { UserSchema } from "../../../user/schemas/user.schema";

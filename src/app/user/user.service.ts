@@ -55,7 +55,7 @@ export class UserService {
         return {
             success: true,
             expired: false,
-            message: "User Fetched Successful.",
+            message: "Users Fetched Successfully.",
             statusCode: 200,
             data: {
                 items,
