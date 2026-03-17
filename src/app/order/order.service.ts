@@ -137,7 +137,7 @@ export class OrderService {
             };
         }
 
-        const userPipeline: PipelineStage[] = [
+        const orderPipeline: PipelineStage[] = [
             { $match: { _id: new Types.ObjectId(orderId) } },
             {
                 $lookup: {
@@ -161,7 +161,7 @@ export class OrderService {
             { $limit: 1 }
         ];
 
-        const [user] = await this.orderModel.aggregate(userPipeline);
+        const [user] = await this.orderModel.aggregate(orderPipeline);
 
         return {
             success: true,
