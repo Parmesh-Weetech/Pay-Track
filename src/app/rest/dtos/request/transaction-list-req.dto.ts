@@ -12,5 +12,5 @@ export class ListTransactionReqDTO extends OmitType(PaginationFilter, ['search',
     @IsOptional()
     @IsString()
     @ApiPropertyOptional()
-    transactionStatus: string;
+    transactionStatus?: string;
 }

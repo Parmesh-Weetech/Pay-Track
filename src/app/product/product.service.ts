@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ListProductReqDTO } from '../rest/dtos/request/product-list-req.dto';
-import { ProductListResponse, ProductResponse } from '../rest/dtos/response/product-response.dto';
+import { ProductListResponse, ProductResponse } from '../rest/dtos/response/product-res.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { ProductSchema } from './schemas/product.schema';

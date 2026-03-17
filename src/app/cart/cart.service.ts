@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CartSchema } from './schemas/cart.schema';
 import { Model } from 'mongoose';
 import { ListCartReqDTO } from '../rest/dtos/request/cart-list-req.dto';
-import { CartListResponse, CartResponse } from '../rest/dtos/response/cart-response.dto';
+import { CartListResponse, CartResponse } from '../rest/dtos/response/cart-res.dto';
 import { operators } from '../user/types/operator-type';
 import { SORT_ORDER } from '../common/types/sort-type';
 

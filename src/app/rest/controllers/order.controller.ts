@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
-import { OrderListResponse, OrderResponse } from "../dtos/response/order-response.dto";
+import { OrderListResponse, OrderResponse } from "../dtos/response/order-res.dto";
 import { OrderService } from "../../order/order.service";
 import { LogAround } from "src/app/common/logger/log-around";
 import { ListOrderReqDTO } from "../dtos/request/order-list-req.dto";

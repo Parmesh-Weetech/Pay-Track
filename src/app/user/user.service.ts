@@ -4,7 +4,7 @@ import { UserSchema } from './schemas/user.schema';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { PaginationFilter } from '../common/pagination/pagination-filter';
 import { SORT_ORDER } from '../common/types/sort-type';
-import { UserListResponse, UserResponse } from '../rest/dtos/response/user-response.dto';
+import { UserListResponse, UserResponse } from '../rest/dtos/response/user-res.dto';
 import { operators } from './types/operator-type';
 
 @Injectable()

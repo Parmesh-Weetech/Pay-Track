@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { LogAround } from "src/app/common/logger/log-around";
 import { ListProductReqDTO } from "../dtos/request/product-list-req.dto";
-import { ProductListResponse, ProductResponse } from "../dtos/response/product-response.dto";
+import { ProductListResponse, ProductResponse } from "../dtos/response/product-res.dto";
 import { ProductService } from "src/app/product/product.service";
 
 @Controller({ path: 'products' })

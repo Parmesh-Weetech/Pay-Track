@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { ListTransactionReqDTO } from "../dtos/request/transaction-list-req.dto";
-import { TransactionListResponse, TransactionResponse } from "../dtos/response/transaction-response.dto";
+import { TransactionListResponse, TransactionResponse } from "../dtos/response/transaction-res.dto";
 import { TransactionService } from "../../transaction/transaction.service";
 import { LogAround } from "src/app/common/logger/log-around";
 

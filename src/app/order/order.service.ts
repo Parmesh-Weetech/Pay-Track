@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PaginationFilter } from '../common/pagination/pagination-filter';
-import { OrderListResponse, OrderResponse } from '../rest/dtos/response/order-response.dto';
+import { OrderListResponse, OrderResponse } from '../rest/dtos/response/order-res.dto';
 import { SORT_ORDER } from '../common/types/sort-type';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';

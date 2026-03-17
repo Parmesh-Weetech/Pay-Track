@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query } from "@nestjs/common";
 import { UserService } from "../../user/user.service";
 import { LogAround } from "src/app/common/logger/log-around";
 import { PaginationFilter } from "src/app/common/pagination/pagination-filter";
-import { UserListResponse, UserResponse } from "../dtos/response/user-response.dto";
+import { UserListResponse, UserResponse } from "../dtos/response/user-res.dto";
 
 @Controller({ path: "user" })
 export class UserController {
