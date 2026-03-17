@@ -39,6 +39,7 @@ export type SeedOrder = {
 };
 
 export type SeedTransactionHistory = {
+    _id?: mongoose.Types.ObjectId;
     transactionId: mongoose.Types.ObjectId;
     previousState: string;
     newState: string;

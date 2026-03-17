@@ -24,8 +24,16 @@ export class TransactionHistoryController {
     async getTransactionHistoryDetails(
         @Param('historyId') historyId: string,
     ): Promise<TransactionHistoryResponse> {
-        return await this.transactionHistoryService.getTransactionHistoryDetails(
-            historyId
-        )
+        return await this.transactionHistoryService.getTransactionHistoryDetails(historyId);
+    }
+
+    @Get(':historyId/transaction')
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getTransactionHistoryWithTransactionDetail(
+        @Param('historyId') historyId: string,
+    ): Promise<TransactionHistoryResponse> {
+        return await this.transactionHistoryService.getTransactionHistoryWithTransaction(historyId);
     }
 }

@@ -22,6 +22,10 @@ const BATCH = 5000;
 const TOTAL = 100000;
 const HISTORY_PER_TRANSACTION = 1;
 
+const changedByOptions = ["user", "admin", "system", "gateway"] as const;
+const randomChangedBy = () => faker.helpers.arrayElement(changedByOptions);
+const randomReason = () => faker.lorem.words({ min: 2, max: 4 });
+
 const UserModel =
     mongoose.models.User ?? mongoose.model<UserDocument>("User", UserMongooseSchema);
 const ProductModel =
@@ -124,6 +128,7 @@ async function seedOrdersTransactions() {
         const orders: SeedOrder[] = [];
         const transactions: SeedTransaction[] = [];
         const histories: Array<{
+            _id: mongoose.Types.ObjectId;
             transactionId: mongoose.Types.ObjectId;
             previousState: string;
             newState: string;
@@ -166,7 +171,36 @@ async function seedOrdersTransactions() {
                 });
             }
 
+            let embeddedHistory: Array<{
+                _id: mongoose.Types.ObjectId;
+                transactionId: mongoose.Types.ObjectId;
+                previousState: string;
+                newState: string;
+                changedBy: string;
+                reason: string;
+            }> = [];
+
             if (existingTransactions + i + j < TOTAL) {
+                const maxAdditionalHistories = TOTAL - (existingHistories + histories.length);
+                const historyCount = Math.max(0, Math.min(HISTORY_PER_TRANSACTION, maxAdditionalHistories));
+
+                if (historyCount > 0) {
+                    embeddedHistory = Array.from({ length: historyCount }).map(() => {
+                        const historyId = new mongoose.Types.ObjectId();
+                        const historyEntry = {
+                            _id: historyId,
+                            transactionId,
+                            previousState: TransactionStatus.PENDING,
+                            newState: transactionStatus,
+                            changedBy: randomChangedBy(),
+                            reason: randomReason()
+                        };
+
+                        histories.push(historyEntry);
+                        return historyEntry;
+                    });
+                }
+
                 transactions.push({
                     _id: transactionId,
                     orderId,
@@ -175,29 +209,8 @@ async function seedOrdersTransactions() {
                     paymentMethod: faker.helpers.arrayElement(Object.values(PaymentMethod)),
                     transactionStatus,
                     totalAmount: totalPrice,
-                    history: [
-                        {
-                            transactionId,
-                            previousState: TransactionStatus.PENDING,
-                            newState: transactionStatus,
-                            changedBy: "system",
-                            reason: "status updated"
-                        }
-                    ]
+                    history: embeddedHistory
                 });
-            }
-
-            if (existingHistories + histories.length < TOTAL) {
-                for (let h = 0; h < HISTORY_PER_TRANSACTION; h++) {
-                    if (existingHistories + histories.length >= TOTAL) break;
-                    histories.push({
-                        transactionId,
-                        previousState: TransactionStatus.PENDING,
-                        newState: transactionStatus,
-                        changedBy: "system",
-                        reason: "status updated"
-                    });
-                }
             }
         }
 
@@ -295,6 +308,7 @@ async function seedTransactionHistories() {
     }
 
     const histories: Array<{
+        _id: mongoose.Types.ObjectId;
         transactionId: mongoose.Types.ObjectId;
         previousState: string;
         newState: string;
@@ -305,18 +319,121 @@ async function seedTransactionHistories() {
     for (const tx of transactions) {
         if (histories.length >= remaining) break;
         if (existingIds.has(String(tx._id))) continue;
+        const historyId = new mongoose.Types.ObjectId();
         histories.push({
+            _id: historyId,
             transactionId: tx._id,
             previousState: TransactionStatus.PENDING,
             newState: tx.transactionStatus ?? TransactionStatus.PENDING,
-            changedBy: "system",
-            reason: "status updated"
+            changedBy: randomChangedBy(),
+            reason: randomReason()
         });
+
+        await TransactionModel.updateOne(
+            { _id: tx._id, "history._id": { $ne: historyId } },
+            {
+                $push: {
+                    history: {
+                        _id: historyId,
+                        transactionId: tx._id,
+                        previousState: TransactionStatus.PENDING,
+                        newState: tx.transactionStatus ?? TransactionStatus.PENDING,
+                        changedBy: randomChangedBy(),
+                        reason: randomReason()
+                    }
+                }
+            }
+        );
     }
 
     if (histories.length > 0) {
         await TransactionHistoryModel.insertMany(histories, { ordered: false });
         console.log(`Inserted transaction histories: ${existing + histories.length}`);
+    }
+}
+
+async function syncTransactionHistoryIds() {
+    console.log("Syncing transaction history ids between transactions and transaction_history...");
+
+    const existingHistoryIds = new Set<string>(
+        (await TransactionHistoryModel.distinct("_id")).map(String)
+    );
+
+    let txSkip = 0;
+    while (true) {
+        const transactions = await TransactionModel.find()
+            .select("_id history transactionStatus")
+            .skip(txSkip)
+            .limit(BATCH)
+            .lean();
+
+        if (transactions.length === 0) break;
+        txSkip += transactions.length;
+
+        const inserts: Array<{
+            _id: mongoose.Types.ObjectId;
+            transactionId: mongoose.Types.ObjectId;
+            previousState: string;
+            newState: string;
+            changedBy: string;
+            reason: string;
+            changedAt?: Date;
+        }> = [];
+
+        for (const tx of transactions) {
+            const historyItems = Array.isArray(tx.history) ? tx.history : [];
+            for (const history of historyItems) {
+                if (!history?._id) continue;
+                const historyId = String(history._id);
+                if (existingHistoryIds.has(historyId)) continue;
+
+                existingHistoryIds.add(historyId);
+                inserts.push({
+                    _id: history._id,
+                    transactionId: tx._id,
+                    previousState: history.previousState ?? TransactionStatus.PENDING,
+                    newState: history.newState ?? tx.transactionStatus ?? TransactionStatus.PENDING,
+                    changedBy: history.changedBy ?? randomChangedBy(),
+                    reason: history.reason ?? randomReason(),
+                    changedAt: history.changedAt
+                });
+            }
+        }
+
+        if (inserts.length > 0) {
+            await TransactionHistoryModel.insertMany(inserts, { ordered: false });
+        }
+    }
+
+    let historySkip = 0;
+    while (true) {
+        const histories = await TransactionHistoryModel.find()
+            .select("_id transactionId previousState newState changedBy reason changedAt")
+            .skip(historySkip)
+            .limit(BATCH)
+            .lean();
+
+        if (histories.length === 0) break;
+        historySkip += histories.length;
+
+        for (const history of histories) {
+            await TransactionModel.updateOne(
+                { _id: history.transactionId, "history._id": { $ne: history._id } },
+                {
+                    $push: {
+                        history: {
+                            _id: history._id,
+                            transactionId: history.transactionId,
+                            previousState: history.previousState,
+                            newState: history.newState,
+                            changedBy: history.changedBy ?? randomChangedBy(),
+                            reason: history.reason ?? randomReason(),
+                            changedAt: history.changedAt
+                        }
+                    }
+                }
+            );
+        }
     }
 }
 
@@ -330,6 +447,7 @@ async function run() {
     await seedOrdersTransactions();
     await seedCarts();
     await seedTransactionHistories();
+    await syncTransactionHistoryIds();
 
     console.log("Seeding completed");
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { TransactionHistorySchema } from './schemas/transaction_history.schema';
 import { ListTransactionHistoryReqDTO } from '../rest/dtos/request/transaction-history-list-req.dto';
 import { TransactionHistoryListResponse, TransactionHistoryResponse } from '../rest/dtos/response/transaction-history-res.dto';
@@ -89,5 +89,42 @@ export class TransactionHistoryService {
             statusCode: 200,
             data: transaction ?? null
         };
+    }
+
+    async getTransactionHistoryWithTransaction(
+        historyId: string
+    ): Promise<TransactionHistoryResponse> {
+        const transactionPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(historyId) } },
+            {
+                $lookup: {
+                    from: 'transactions',
+                    let: { historyId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: [
+                                        "$$historyId",
+                                        "$history._id"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'transaction'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [history] = await this.transactionHistoryModel.aggregate(transactionPipeline);
+
+        return {
+            success: true,
+            statusCode: 200,
+            message: "Transaction History Fetched Successfully with Transaction.",
+            data: history,
+            expired: false
+        }
     }
 }

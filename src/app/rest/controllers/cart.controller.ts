@@ -27,4 +27,14 @@ export class CartController {
     ): Promise<CartResponse> {
         return await this.cartService.getCartById(cartId);
     }
+
+    @Get(':cartId/products')
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getCartWithProducts(
+        @Param('cartId') cartId: string
+    ): Promise<CartResponse> {
+        return await this.cartService.getCartWithProducts(cartId);
+    }
 }
