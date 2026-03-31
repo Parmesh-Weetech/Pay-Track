@@ -27,4 +27,14 @@ export class TransactionController {
     ): Promise<TransactionResponse> {
         return await this.transactionService.getTransactionById(transactionId);
     }
+
+    @Get(":transactionId/order")
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getTransactionWithOrders(
+        @Param('transactionId') transactionId: string
+    ): Promise<TransactionResponse> {
+        return await this.transactionService.getTransactionWithOrders(transactionId);
+    }
 }

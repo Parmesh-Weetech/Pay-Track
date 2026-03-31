@@ -7,7 +7,6 @@ import { SORT_ORDER } from '../common/types/sort-type';
 import { UserListResponse, UserResponse } from '../rest/dtos/response/user-res.dto';
 import { UserSummaryResponse } from '../rest/dtos/response/user-summary-res.dto';
 import { operators } from './types/operator-type';
-import { UserSummaryResponse } from '../rest/dtos/response/user-summary-res.dto';
 
 @Injectable()
 export class UserService {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ListTransactionReqDTO } from '../rest/dtos/request/transaction-list-req.dto';
 import { TransactionListResponse, TransactionResponse } from '../rest/dtos/response/transaction-res.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { TransactionSchema } from './schemas/transaction.schema';
 import { SORT_ORDER } from '../common/types/sort-type';
 
@@ -91,5 +91,40 @@ export class TransactionService {
             statusCode: 200,
             data: transaction ?? null
         };
+    }
+
+    async getTransactionWithOrders(transactionId: string): Promise<TransactionResponse> {
+        const transactionPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(transactionId) } },
+            {
+                $lookup: {
+                    from: 'orders',
+                    let: { orderId: "$orderId" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: [
+                                        "$_id",
+                                        "$$orderId"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'order'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [transaction] = await this.transactionModel.aggregate(transactionPipeline);
+
+        return {
+            success: true,
+            expired: false,
+            data: transaction,
+            message: "Transaction With Orders Fetched Successfully.",
+            statusCode: 200
+        }
     }
 }
