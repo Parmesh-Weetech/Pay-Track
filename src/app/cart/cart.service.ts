@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CartSchema } from './schemas/cart.schema';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { ListCartReqDTO } from '../rest/dtos/request/cart-list-req.dto';
-import { CartListResponse, CartResponse } from '../rest/dtos/response/cart-response.dto';
+import { CartListResponse, CartResponse } from '../rest/dtos/response/cart-res.dto';
 import { operators } from '../user/types/operator-type';
 import { SORT_ORDER } from '../common/types/sort-type';
 
@@ -23,6 +23,10 @@ export class CartService {
 
         if (query.status) {
             filter.status = query.status;
+        }
+
+        if (query.userId) {
+            filter.userId = new Types.ObjectId(query.userId);
         }
 
         if (query.totalPrice) {
@@ -94,5 +98,40 @@ export class CartService {
             statusCode: 200,
             data: cart ?? null
         };
+    }
+
+    async getCartWithProducts(cartId: string): Promise<CartResponse> {
+        const cartPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(cartId) } },
+            {
+                $lookup: {
+                    from: 'products',
+                    let: { productIds: "$items.productId" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: [
+                                        "$_id",
+                                        "$$productIds"
+                                    ]
+                                }
+                            }
+                        }],
+                    as: 'products'
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [history] = await this.cartModel.aggregate(cartPipeline);
+
+        return {
+            success: true,
+            statusCode: 200,
+            message: "Cart Fetched With Products Successfully.",
+            data: history,
+            expired: false
+        }
     }
 }

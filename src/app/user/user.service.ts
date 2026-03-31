@@ -4,7 +4,8 @@ import { UserSchema } from './schemas/user.schema';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { PaginationFilter } from '../common/pagination/pagination-filter';
 import { SORT_ORDER } from '../common/types/sort-type';
-import { UserListResponse, UserResponse } from '../rest/dtos/response/user-response.dto';
+import { UserListResponse, UserResponse } from '../rest/dtos/response/user-res.dto';
+import { UserSummaryResponse } from '../rest/dtos/response/user-summary-res.dto';
 import { operators } from './types/operator-type';
 
 @Injectable()
@@ -279,5 +280,85 @@ export class UserService {
             message: "User with transactions fetched successfully.",
             statusCode: 200
         }
+    }
+
+    async getSummary(userId: string): Promise<UserSummaryResponse> {
+        const userPipeline: PipelineStage[] = [
+            { $match: { _id: new Types.ObjectId(userId) } },
+            {
+                $lookup: {
+                    from: 'carts',
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'carts'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'orders',
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'orders'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'transactions',
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'transactions'
+                }
+            },
+            {
+                $addFields: {
+                    cartCount: { $size: '$carts' },
+                    orderCount: { $size: '$orders' },
+                    transactionCount: { $size: '$transactions' },
+                    totalSpent: { $sum: '$transactions.totalAmount' }
+                }
+            },
+            {
+                $project: {
+                    carts: 0,
+                    orders: 0,
+                    transactions: 0
+                }
+            },
+            { $limit: 1 }
+        ];
+
+        const [summary] = await this.userModel.aggregate(userPipeline);
+
+        if (!summary) {
+            return {
+                success: true,
+                expired: false,
+                message: "User summary fetched successfully.",
+                statusCode: 200,
+                data: null
+            };
+        }
+
+        const {
+            cartCount = 0,
+            orderCount = 0,
+            transactionCount = 0,
+            totalSpent = 0,
+            ...user
+        } = summary;
+
+        return {
+            success: true,
+            expired: false,
+            message: "User summary fetched successfully.",
+            statusCode: 200,
+            data: {
+                user,
+                cartCount,
+                orderCount,
+                transactionCount,
+                totalSpent
+            }
+        };
     }
 }

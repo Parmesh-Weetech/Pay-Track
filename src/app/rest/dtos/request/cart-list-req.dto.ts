@@ -13,4 +13,9 @@ export class ListCartReqDTO extends OmitType(PaginationFilter, ['search'] as con
     @ValidateIf(data => data.totalPrice)
     @IsNotEmpty()
     operator?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiPropertyOptional()
+    userId?: string;
 }

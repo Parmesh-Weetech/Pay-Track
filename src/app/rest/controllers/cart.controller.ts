@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { LogAround } from "src/app/common/logger/log-around";
 import { ListCartReqDTO } from "../dtos/request/cart-list-req.dto";
-import { CartListResponse, CartResponse } from "../dtos/response/cart-response.dto";
+import { CartListResponse, CartResponse } from "../dtos/response/cart-res.dto";
 import { CartService } from "src/app/cart/cart.service";
 
 @Controller({ path: 'cart' })
@@ -26,5 +26,15 @@ export class CartController {
         @Param('cartId') cartId: string
     ): Promise<CartResponse> {
         return await this.cartService.getCartById(cartId);
+    }
+
+    @Get(':cartId/products')
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getCartWithProducts(
+        @Param('cartId') cartId: string
+    ): Promise<CartResponse> {
+        return await this.cartService.getCartWithProducts(cartId);
     }
 }

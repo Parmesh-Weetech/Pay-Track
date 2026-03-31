@@ -2,7 +2,8 @@ import { Controller, Get, Param, Query } from "@nestjs/common";
 import { UserService } from "../../user/user.service";
 import { LogAround } from "src/app/common/logger/log-around";
 import { PaginationFilter } from "src/app/common/pagination/pagination-filter";
-import { UserListResponse, UserResponse } from "../dtos/response/user-response.dto";
+import { UserListResponse, UserResponse } from "../dtos/response/user-res.dto";
+import { UserSummaryResponse } from "../dtos/response/user-summary-res.dto";
 
 @Controller({ path: "user" })
 export class UserController {
@@ -84,5 +85,15 @@ export class UserController {
             transactionStatus,
             operator
         )
+    }
+
+    @Get(':userId/summary')
+    @LogAround({
+        ignoreReturn: true
+    })
+    async getSummary(
+        @Param('userId') userId: string
+    ): Promise<UserSummaryResponse> {
+        return await this.userService.getSummary(userId);
     }
 }
